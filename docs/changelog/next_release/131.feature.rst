@@ -1,0 +1,5 @@
+Add support for ``git archive`` builds via a tracked ``.git_archival.txt``
+file. When the file is present and its ``$Format:...$`` placeholders have
+been substituted, the version is derived from its contents instead of
+running ``git``. See ``git_archive`` documentation for the required
+``.git_archival.txt`` and ``.gitattributes`` setup.

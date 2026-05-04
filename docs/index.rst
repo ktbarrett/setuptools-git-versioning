@@ -18,6 +18,7 @@
     command
     ci
     runtime_version
+    git_archive
     schemas/index
     options/index
     substitutions/index
