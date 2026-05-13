@@ -10,7 +10,7 @@ from packaging.version import Version
 from setuptools_git_versioning.archival import (
     ARCHIVAL_FILENAME,
     ArchivalData,
-    archival_to_version_data,
+    get_data_from_archival_file,
     parse_archival_file,
     version_from_archival,
 )
@@ -27,6 +27,9 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.all
 
 GIT_ARCHIVAL_STABLE = "node: $Format:%H$\ndescribe-name: $Format:%(describe:tags=true,match=*[0-9]*)$\n"
+GIT_ARCHIVAL_WITH_BRANCH = (
+    "node: $Format:%H$\ndescribe-name: $Format:%(describe:tags=true,match=*[0-9]*)$\nref-names: $Format:%D$\n"
+)
 
 
 # ---------------------------------------------------------------------------
@@ -89,7 +92,7 @@ def test_archival_to_version_data_post_tag() -> None:
         "node": "4060507deadbeef0123456789abcdef012345678",
         "describe-name": "v1.2.3-5-g4060507deadbeef0123456789abcdef012345678",
     }
-    result = archival_to_version_data(data)
+    result = get_data_from_archival_file(data)
     assert result == ArchivalData(
         tag="v1.2.3",
         ccount=5,
@@ -105,7 +108,7 @@ def test_archival_to_version_data_bare_tag() -> None:
         "node": "4060507deadbeef0123456789abcdef012345678",
         "describe-name": "v1.2.3",
     }
-    result = archival_to_version_data(data)
+    result = get_data_from_archival_file(data)
     assert result is not None
     assert result.tag == "v1.2.3"
     assert result.ccount == 0
@@ -119,7 +122,7 @@ def test_archival_to_version_data_dirty_suffix() -> None:
         "node": "4060507deadbeef0123456789abcdef012345678",
         "describe-name": "v1.2.3-5-g4060507deadbeef0123456789abcdef012345678-dirty",
     }
-    result = archival_to_version_data(data)
+    result = get_data_from_archival_file(data)
     assert result is not None
     assert result.dirty is True
     assert result.tag == "v1.2.3"
@@ -129,7 +132,7 @@ def test_archival_to_version_data_dirty_suffix() -> None:
 def test_archival_to_version_data_unsubstituted_returns_none(caplog: pytest.LogCaptureFixture) -> None:
     data = {"node": "$Format:%H$", "describe-name": "$Format:%(describe)$"}
     with caplog.at_level("WARNING"):
-        result = archival_to_version_data(data)
+        result = get_data_from_archival_file(data)
     assert result is None
     assert "unprocessed" in caplog.text
 
@@ -143,7 +146,7 @@ def test_archival_to_version_data_old_git_falls_back_to_ref_names(
         "ref-names": "HEAD -> main, tag: v1.2.3",
     }
     with caplog.at_level("WARNING"):
-        result = archival_to_version_data(data)
+        result = get_data_from_archival_file(data)
     assert result is not None
     assert result.tag == "v1.2.3"
     assert result.ccount == 0
@@ -163,7 +166,7 @@ def test_archival_to_version_data_old_git_no_tag_in_ref_names_returns_none(
         "ref-names": "HEAD -> main, origin/main",
     }
     with caplog.at_level("WARNING"):
-        result = archival_to_version_data(data)
+        result = get_data_from_archival_file(data)
     assert result is None
     assert "git <2.32" in caplog.text
 
@@ -177,7 +180,7 @@ def test_archival_to_version_data_accepts_sha256_node() -> None:
         "node": sha256_node,
         "describe-name": "v1.2.3",
     }
-    result = archival_to_version_data(data)
+    result = get_data_from_archival_file(data)
     assert result is not None
     assert result.tag == "v1.2.3"
     assert result.full_sha == sha256_node
@@ -194,7 +197,7 @@ def test_archival_to_version_data_prefers_full_sha_over_describe_short_sha() -> 
         "node": "4060507deadbeef0123456789abcdef012345678",
         "describe-name": "v1.2.3-5-g4060507",  # conventional 7-char short SHA
     }
-    result = archival_to_version_data(data)
+    result = get_data_from_archival_file(data)
     assert result is not None
     assert result.tag == "v1.2.3"
     assert result.ccount == 5
@@ -212,7 +215,7 @@ def test_archival_to_version_data_describe_with_non_numeric_middle_part() -> Non
         "node": "4060507deadbeef0123456789abcdef012345678",
         "describe-name": "foo-bar-baz",
     }
-    result = archival_to_version_data(data)
+    result = get_data_from_archival_file(data)
     assert result is not None
     assert result.tag == "foo-bar-baz"
     assert result.ccount == 0
@@ -224,7 +227,7 @@ def test_archival_to_version_data_short_sha_fallback_when_node_missing() -> None
     data = {
         "describe-name": "v1.2.3-5-gabc1234",
     }
-    result = archival_to_version_data(data)
+    result = get_data_from_archival_file(data)
     assert result is not None
     assert result.tag == "v1.2.3"
     assert result.ccount == 5
@@ -238,7 +241,7 @@ def test_archival_to_version_data_branch_from_ref_names() -> None:
         "describe-name": "v1.2.3-5-g4060507deadbeef0123456789abcdef012345678",
         "ref-names": "HEAD -> feature/x, origin/main",
     }
-    result = archival_to_version_data(data)
+    result = get_data_from_archival_file(data)
     assert result is not None
     assert result.branch == "feature/x"
 
@@ -248,7 +251,7 @@ def test_archival_to_version_data_branch_absent() -> None:
         "node": "4060507deadbeef0123456789abcdef012345678",
         "describe-name": "v1.2.3-5-g4060507deadbeef0123456789abcdef012345678",
     }
-    result = archival_to_version_data(data)
+    result = get_data_from_archival_file(data)
     assert result is not None
     assert result.branch is None
 
@@ -258,7 +261,7 @@ def test_archival_to_version_data_no_tag_anywhere_returns_none() -> None:
         "node": "4060507deadbeef0123456789abcdef012345678",
         "ref-names": "HEAD -> main",
     }
-    assert archival_to_version_data(data) is None
+    assert get_data_from_archival_file(data) is None
 
 
 def test_version_from_archival_missing_file_returns_none(tmp_path: Path) -> None:
@@ -307,13 +310,41 @@ def test_version_from_archival_branch_defaults_to_head_when_missing(tmp_path: Pa
     assert version == Version("1.2.3.post5+git.4060507d.HEAD")
 
 
+def test_version_from_archival_applies_tag_formatter(tmp_path: Path) -> None:
+    (tmp_path / ARCHIVAL_FILENAME).write_text(
+        "node: 4060507deadbeef0123456789abcdef012345678\ndescribe-name: release/1.2.3\n",
+        encoding="utf-8",
+    )
+    version = version_from_archival(
+        tmp_path,
+        tag_formatter=lambda tag: tag.removeprefix("release/"),
+    )
+    assert version == Version("1.2.3")
+
+
+def test_version_from_archival_applies_branch_formatter(tmp_path: Path) -> None:
+    (tmp_path / ARCHIVAL_FILENAME).write_text(
+        "node: 4060507deadbeef0123456789abcdef012345678\n"
+        "describe-name: v1.2.3-5-g4060507deadbeef0123456789abcdef012345678\n"
+        "ref-names: HEAD -> feature/issue-1234-add-a-great-feature\n",
+        encoding="utf-8",
+    )
+    version = version_from_archival(
+        tmp_path,
+        dev_template="{tag}.post{ccount}+{branch}",
+        branch_formatter=lambda branch: branch.split("/")[1].split("-")[1],
+    )
+    assert version == Version("1.2.3.post5+1234")
+
+
 # ---------------------------------------------------------------------------
 # Integration: real `git archive` round-trip + build
 # ---------------------------------------------------------------------------
 
 
-def _add_archival_template(repo: Path) -> None:
-    create_file(repo, ARCHIVAL_FILENAME, GIT_ARCHIVAL_STABLE, commit=False)
+def _add_archival_template(repo: Path, *, include_ref_names: bool = False) -> None:
+    template = GIT_ARCHIVAL_WITH_BRANCH if include_ref_names else GIT_ARCHIVAL_STABLE
+    create_file(repo, ARCHIVAL_FILENAME, template, commit=False)
     create_file(repo, ".gitattributes", f"{ARCHIVAL_FILENAME}  export-subst\n", commit=False)
     execute(repo, "git", "add", ARCHIVAL_FILENAME, ".gitattributes")
     execute(repo, "git", "commit", "-m", "add git archive support")
@@ -392,6 +423,59 @@ def test_archival_end_to_end_bare_tag(repo: Path, tmp_path_factory: pytest.TempP
     shutil.copy(repo / ".coveragerc", extracted / ".coveragerc")
 
     assert get_version(extracted) == "1.2.3"
+
+
+@pytest.mark.important
+def test_archival_end_to_end_tag_formatter(repo: Path, tmp_path_factory: pytest.TempPathFactory, create_config) -> None:
+    create_file(
+        repo,
+        "util.py",
+        "def tag_formatter(tag):\n    return tag.removeprefix('release/')\n",
+    )
+    create_config(
+        repo,
+        {
+            "tag_formatter": "util:tag_formatter",
+        },
+    )
+    _add_archival_template(repo)
+    create_tag(repo, "release/1.2.3")
+
+    extracted = tmp_path_factory.mktemp("extracted")
+    _git_archive_extract(repo, extracted)
+    shutil.copy(repo / ".coveragerc", extracted / ".coveragerc")
+
+    assert get_version(extracted) == "1.2.3"
+
+
+@pytest.mark.important
+def test_archival_end_to_end_branch_formatter(
+    repo: Path,
+    tmp_path_factory: pytest.TempPathFactory,
+    create_config,
+) -> None:
+    create_tag(repo, "1.2.3")
+    create_file(repo)  # one commit after the tag
+    execute(repo, "git", "checkout", "-b", "feature/issue-1234-add-a-great-feature")
+    create_file(
+        repo,
+        "util.py",
+        "def branch_formatter(branch):\n    return branch.split('/')[1].split('-')[1]\n",
+    )
+    create_config(
+        repo,
+        {
+            "dev_template": "{tag}.post{ccount}+{branch}",
+            "branch_formatter": "util:branch_formatter",
+        },
+    )
+    _add_archival_template(repo, include_ref_names=True)
+
+    extracted = tmp_path_factory.mktemp("extracted")
+    _git_archive_extract(repo, extracted)
+    shutil.copy(repo / ".coveragerc", extracted / ".coveragerc")
+
+    assert get_version(extracted) == "1.2.3.post4+1234"
 
 
 def test_archival_unsubstituted_falls_through_to_live_git(repo: Path, caplog: pytest.LogCaptureFixture) -> None:

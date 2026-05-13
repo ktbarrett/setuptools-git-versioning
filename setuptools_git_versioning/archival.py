@@ -13,10 +13,13 @@ from setuptools_git_versioning.defaults import (
     DEFAULT_DIRTY_TEMPLATE,
     DEFAULT_TEMPLATE,
 )
+from setuptools_git_versioning.factories import create_branch_formatter, create_tag_formatter
 from setuptools_git_versioning.log import DEBUG, INFO
 from setuptools_git_versioning.subst import resolve_substitutions
 
 if TYPE_CHECKING:
+    from typing import Callable
+
     from packaging.version import Version
 
 ARCHIVAL_FILENAME = ".git_archival.txt"
@@ -92,7 +95,7 @@ def _branch_from_ref_names(ref_names: str) -> str | None:
     return None
 
 
-def archival_to_version_data(data: dict[str, str]) -> ArchivalData | None:
+def get_data_from_archival_file(data: dict[str, str]) -> ArchivalData | None:
     """Convert parsed archival data into structured version info, or None.
 
     Returns None when the file looks unsubstituted or otherwise unusable so
@@ -156,12 +159,15 @@ def archival_to_version_data(data: dict[str, str]) -> ArchivalData | None:
     )
 
 
-def version_from_archival(
+def version_from_archival(  # noqa: PLR0913
     project_root: str | os.PathLike,
     *,
+    package_name: str | None = None,
     template: str = DEFAULT_TEMPLATE,
     dev_template: str = DEFAULT_DEV_TEMPLATE,
     dirty_template: str = DEFAULT_DIRTY_TEMPLATE,
+    tag_formatter: Callable[[str], str] | str | None = None,
+    branch_formatter: Callable[[str], str] | str | None = None,
 ) -> Version | None:
     """Return a Version derived from .git_archival.txt, or None if unavailable."""
     archival_path = Path(project_root).joinpath(ARCHIVAL_FILENAME)
@@ -171,11 +177,17 @@ def version_from_archival(
 
     log.log(INFO, "File '%s' is found, reading its content", archival_path)
     data = parse_archival_file(archival_path)
-    info = archival_to_version_data(data)
+    info = get_data_from_archival_file(data)
     if info is None:
         return None
 
     log.log(DEBUG, "Parsed archival data: %r", info)
+
+    tag = info.tag
+    if tag_formatter is not None:
+        tag_format_callback = create_tag_formatter(tag_formatter, package_name=package_name, root=project_root)
+        tag = tag_format_callback(tag)
+        log.log(DEBUG, "Tag after formatting: %r", tag)
 
     if info.dirty:
         log.log(INFO, "Using template from 'dirty_template' option")
@@ -191,11 +203,15 @@ def version_from_archival(
     # to the literal "HEAD" so `{branch}` substitution mirrors what
     # `git rev-parse --abbrev-ref HEAD` produces in detached-HEAD state.
     branch = info.branch if info.branch is not None else "HEAD"
+    if branch_formatter is not None:
+        branch_format_callback = create_branch_formatter(branch_formatter, package_name=package_name, root=project_root)
+        branch = branch_format_callback(branch)
+        log.log(INFO, "Branch after formatting: %r", branch)
 
     rendered = resolve_substitutions(
         chosen,
         sha=info.sha,
-        tag=info.tag,
+        tag=tag,
         ccount=info.ccount,
         branch=branch,
         full_sha=info.full_sha,
