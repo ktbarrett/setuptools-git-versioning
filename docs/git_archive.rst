@@ -44,7 +44,9 @@ When ``git archive`` runs, the placeholders are expanded into the actual
 commit SHA and ``git describe`` output for the archived commit. When the
 package is later built from the extracted archive,
 ``setuptools-git-versioning`` reads the file and resolves the version using
-the configured ``template`` / ``dev_template`` / ``dirty_template``.
+the configured ``template`` / ``dev_template`` / ``dirty_template``. If
+configured, ``tag_formatter`` and ``branch_formatter`` are applied to the
+archived tag and branch names before template substitution.
 
 The same file format is used by ``setuptools-scm``, so a single
 ``.git_archival.txt`` works with both tools.
@@ -93,9 +95,9 @@ ignored, falling through to the live ``git`` flow.
 Limitations
 ~~~~~~~~~~~
 
-- ``tag_filter``, ``tag_formatter``, and ``sort_by`` have no effect on
-  archive builds. The tag is whatever ``git describe`` chose at archive
-  time.
+- ``tag_filter`` and ``sort_by`` have no effect on archive builds. The tag is
+  still whatever ``git describe`` chose at archive time, even if
+  ``tag_formatter`` rewrites it afterward.
 - ``count_commits_from_version_file`` and ``version_file`` are not consulted
   in the archive flow.
 - Older git versions (<2.32) do not understand the ``%(describe...)``
