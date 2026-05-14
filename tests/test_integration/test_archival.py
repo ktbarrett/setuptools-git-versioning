@@ -317,7 +317,7 @@ def test_version_from_archival_applies_tag_formatter(tmp_path: Path) -> None:
     )
     version = version_from_archival(
         tmp_path,
-        tag_formatter=lambda tag: tag.removeprefix("release/"),
+        tag_formatter=lambda tag: tag[len("release/") :] if tag.startswith("release/") else tag,
     )
     assert version == Version("1.2.3")
 
@@ -430,7 +430,7 @@ def test_archival_end_to_end_tag_formatter(repo: Path, tmp_path_factory: pytest.
     create_file(
         repo,
         "util.py",
-        "def tag_formatter(tag):\n    return tag.removeprefix('release/')\n",
+        "def tag_formatter(tag):\n    return tag[len('release/'):] if tag.startswith('release/') else tag\n",
     )
     create_config(
         repo,
