@@ -1,0 +1,20 @@
+3.1.x
+=====
+
+3.1.0 (2026-05-15)
+-------------------
+
+Features
+~~~~~~~~
+
+- Added a dynamic-metadata provider compatible with `scikit-build-core <https://scikit-build-core.readthedocs.io>`_. (:github:pull:`130`)
+
+  Thanks to :github:user:`ktbarrett`.
+
+- Add support for ``git archive`` builds via a tracked ``.git_archival.txt`` file. (:github:pull:`131`)
+
+  When the file is present and its ``$Format:...$`` placeholders have
+  been substituted, the version is derived from its contents instead of
+  running ``git``. See :ref:`git-archive`.
+
+  Thanks to :github:user:`ktbarrett`.

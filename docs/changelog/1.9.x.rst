@@ -22,7 +22,7 @@ Fix creating multiple releases for the same tag.
 1.9.1 (2022-03-21)
 ------------------
 
-Remove ``pyproject.toml`` file from ``.tag.gz`` package (:github:tickets:`49`).
+Remove ``pyproject.toml`` file from ``.tag.gz`` package (:github:pull:`49`).
 
 1.9.2 (2022-03-21)
 ------------------

@@ -27,7 +27,7 @@ In such a case you need to create a text file
 with your **next release number** (e.g. ``1.1.0``):
 
 .. code-block:: txt
-    :caption mymodule/VERSION
+    :caption: mymodule/VERSION
 
     1.1.0
 

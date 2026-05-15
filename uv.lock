@@ -1890,7 +1890,7 @@ docs = [
     { name = "sphinx-copybutton", marker = "python_full_version >= '3.12'", specifier = "~=0.5.2" },
     { name = "sphinx-last-updated-by-git", marker = "python_full_version >= '3.12'", specifier = "~=0.3.8" },
     { name = "sphinx-tabs", marker = "python_full_version >= '3.12'", specifier = "~=3.4.5" },
-    { name = "sphinx-toolbox", marker = "python_full_version >= '3.12'", specifier = "~=4.1.0" },
+    { name = "sphinx-toolbox", marker = "python_full_version >= '3.12'", specifier = "~=4.1.2" },
     { name = "sphinxcontrib-towncrier", marker = "python_full_version >= '3.12'", specifier = "~=0.5.0a0" },
     { name = "towncrier", marker = "python_full_version >= '3.12'", specifier = "~=25.8.0" },
 ]

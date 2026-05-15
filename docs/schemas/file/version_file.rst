@@ -26,7 +26,7 @@ But if you want to get synchronized version numbers in
 both on the branches, you can create a text file and save here current version number:
 
 .. code-block:: txt
-    :caption mymodule/VERSION
+    :caption: mymodule/VERSION
 
     1.0.0
 

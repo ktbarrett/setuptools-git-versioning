@@ -169,5 +169,5 @@ and configure options under the usual ``[tool.setuptools-git-versioning]`` secti
     [tool.setuptools-git-versioning]
     enabled = true
 
-All options under ``[tool.setuptools-git-versioning]`` work exactly as the setuptools backend.
+All options under ``[tool.setuptools-git-versioning]`` work exactly as the for ``setuptools`` backend.
 Inline configuration under ``[tool.scikit-build.metadata.version]`` is not supported.
